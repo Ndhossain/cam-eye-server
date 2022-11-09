@@ -16,7 +16,6 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 function validateJwt (req, res, next) {
-    console.log(req.headers.authorization);
     if(!req.headers.authorization) {
         return res.status(401).send({message: 'Unauthorized Access'});
     }
@@ -61,12 +60,19 @@ async function run() {
             res.send(cursor)
         })
         // reviews
-        app.post('/reviews', validateJwt, (req, res) => {
+        const reviewCollection = db.collection('reviews')
+        app.post('/reviews', validateJwt, async (req, res) => {
             if(req.decoded.uid !== req.body.uid) {
-                return res.status(403).send({message: 'Invalid Authorization'})
+                return res.status(403).send({message: 'Invalid Authorization'});
             }
-            // console.log(req.body);
-            res.send(req.body)
+            const data = {...req.body, date: new Date()};
+            const result = await reviewCollection.insertOne(data);
+            res.send(result);
+        })
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const cursor = await reviewCollection.find(query, {"sort" : [['date', -1]]}).skip(1).limit(2).toArray();
+            res.send(cursor);
         })
     } catch (err) {
         console.log(err);
