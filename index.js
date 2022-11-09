@@ -15,6 +15,22 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.cj5piaf.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function validateJwt (req, res, next) {
+    console.log(req.headers.authorization);
+    if(!req.headers.authorization) {
+        return res.status(401).send({message: 'Unauthorized Access'});
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
+    jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+        if(err) {
+            return res.status(403).send({message: 'Access forbidden'});
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
+
 
 async function run() {
     try {
@@ -33,17 +49,24 @@ async function run() {
         app.get('/services', async (req, res) => {
             const page = Number(req.query.page);
             const size = Number(req.query.size);
-            console.log(page, size);
             const query = {};
             const count = await servcesCollection.countDocuments()
             const cursor = await servcesCollection.find(query).skip(size * page).limit(size).toArray();
             res.send({count, services: cursor});
         })
         app.get('/service-details/:id', async (req, res) => {
-            console.log(req.params)
-            const query = { _id: ObjectId(req.params.id) };
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
             const cursor = await servcesCollection.findOne(query);
-            res.send(cursor || {})
+            res.send(cursor)
+        })
+        // reviews
+        app.post('/reviews', validateJwt, (req, res) => {
+            if(req.decoded.uid !== req.body.uid) {
+                return res.status(403).send({message: 'Invalid Authorization'})
+            }
+            // console.log(req.body);
+            res.send(req.body)
         })
     } catch (err) {
         console.log(err);
