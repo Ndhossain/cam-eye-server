@@ -119,6 +119,13 @@ async function run() {
             const cursor = await blogCollection.find(query).toArray();
             res.send(cursor)
         })
+        // contact message
+        const contactMessageCollection = db.collection('contact-message')
+        app.post('/contact-message', async (req, res) => {
+            const data = req.body;
+            const result = await contactMessageCollection.insertOne(data);
+            res.send(result)
+        })
     } catch (err) {
         console.log(err);
     }
