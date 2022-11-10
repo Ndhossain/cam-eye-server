@@ -104,7 +104,6 @@ async function run() {
                 return res.status(403).send({message: 'Invalid Authorization'});
             }
             const filter = { _id: ObjectId(req.params.id) };
-            console.log(req.body);
             const updateDoc = {
                 $set: {
                     review: req.body.review,
@@ -112,6 +111,13 @@ async function run() {
             };
             const result = await reviewCollection.updateOne(filter, updateDoc);
             res.send(result);
+        })
+        // blogs
+        const blogCollection = db.collection('blogs')
+        app.get('/blogs', async (req, res) => {
+            const query = {};
+            const cursor = await blogCollection.find(query).toArray();
+            res.send(cursor)
         })
     } catch (err) {
         console.log(err);
