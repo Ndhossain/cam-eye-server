@@ -95,8 +95,15 @@ async function run() {
             if(req.decoded.uid !== req.query.uid) {
                 return res.status(403).send({message: 'Invalid Authorization'});
             }
-            const query = { _id: ObjectId(req.params.id) };
+            const filter = { _id: ObjectId(req.params.id) };
             console.log(req.body);
+            const updateDoc = {
+                $set: {
+                    review: req.body.review,
+                },
+            };
+            const result = await reviewCollection.updateOne(filter, updateDoc);
+            res.send(result);
         })
     } catch (err) {
         console.log(err);
