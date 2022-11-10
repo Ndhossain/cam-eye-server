@@ -59,6 +59,14 @@ async function run() {
             const cursor = await servcesCollection.findOne(query);
             res.send(cursor)
         })
+        app.post('/services', validateJwt, async (req, res) => {
+            if(req.decoded.uid !== req.query.uid) {
+                return res.status(403).send({message: 'Invalid Authorization'});
+            }
+            const data = req.body;
+            const result = await servcesCollection.insertOne(data);
+            res.send(result);
+        })
         // review operations
         const reviewCollection = db.collection('reviews')
         app.post('/reviews', validateJwt, async (req, res) => {
