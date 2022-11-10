@@ -59,7 +59,7 @@ async function run() {
             const cursor = await servcesCollection.findOne(query);
             res.send(cursor)
         })
-        // reviews
+        // review operations
         const reviewCollection = db.collection('reviews')
         app.post('/reviews', validateJwt, async (req, res) => {
             if(req.decoded.uid !== req.body.uid) {
@@ -69,10 +69,34 @@ async function run() {
             const result = await reviewCollection.insertOne(data);
             res.send(result);
         })
-        app.get('/reviews', async (req, res) => {
-            const query = {};
-            const cursor = await reviewCollection.find(query, {"sort" : [['date', -1]]}).skip(1).limit(2).toArray();
+        app.get('/reviews/:id', async (req, res) => {
+            const query = {serviceId: req.params.id};
+            const cursor = await reviewCollection.find(query, {"sort" : [['date', -1]]}).toArray();
             res.send(cursor);
+        })
+        app.get('/my-review/:id', validateJwt, async (req, res) => {
+            if(req.decoded.uid !== req.params.id) {
+                return res.status(403).send({message: 'Invalid Authorization'});
+            }
+            const id = req.params.id;
+            const query = {uid: id};
+            const cursor = await reviewCollection.find(query, {"sort" : [['date', -1]]}).toArray();
+            res.send(cursor);
+        })
+        app.delete('/reviews/:id', validateJwt, async (req, res) => {
+            if(req.decoded.uid !== req.query.uid) {
+                return res.status(403).send({message: 'Invalid Authorization'});
+            }
+            const query = { _id: ObjectId(req.params.id) };
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.patch('/reviews/:id', validateJwt, async (req, res) => {
+            if(req.decoded.uid !== req.query.uid) {
+                return res.status(403).send({message: 'Invalid Authorization'});
+            }
+            const query = { _id: ObjectId(req.params.id) };
+            console.log(req.body);
         })
     } catch (err) {
         console.log(err);
